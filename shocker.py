@@ -29,19 +29,25 @@ Scans all hosts specified in the file ./iplist with default options
 
 Read the README for more details
 """
-
-import urllib.request, urllib.error, urllib.parse
 import argparse
-import string
 import io
-import random
-import signal
-import sys
-import socket
+import json
+import pathlib
 import queue
-import threading
+import random
 import re
+import signal
+import socket
+import string
+import sys
+import threading
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections import OrderedDict
+from typing import Final
+
+data2 = []
 
 
 # Wrapper object for sys.sdout to elimate buffering
@@ -83,17 +89,16 @@ def check_hosts(host_target_list, port, verbose):
     """
 
     counter = 0
-    number_of_targets = len(host_target_list)
     confirmed_hosts = []  # List of resoveable and reachable hosts
-    if number_of_targets > 1:
+    if len(host_target_list) > 1:
         print("[+] Checking connectivity to targets...")
     else:
         print("[+] Checking connectivity with target...")
     for host in host_target_list:
         counter += 1
         # Show a progress bar unless verbose or there is only 1 host
-        if not verbose and number_of_targets > 1:
-            print_progress(number_of_targets, counter)
+        if not verbose and len(host_target_list) > 1:
+            print_progress(len(host_target_list), counter)
 
         try:
             if verbose: print("[I] Checking to see if %s resolves..." % host)
@@ -111,7 +116,7 @@ def check_hosts(host_target_list, port, verbose):
             print("[!] Omitting %s from target list..." % host)
     if len(host_target_list) > 1:
         print("[+] %i of %i targets were reachable" % \
-              (len(confirmed_hosts), number_of_targets))
+              (len(confirmed_hosts), len(host_target_list)))
     elif len(confirmed_hosts) == 1:
         print("[+] Target was reachable")
     else:
@@ -132,6 +137,10 @@ def scan_hosts(protocol, host_target_list, port, cgi_list, proxy, verbose):
 
     for host in host_target_list:
         print(f"[+] Looking for vulnerabilities on {host}:{port}")
+        data1 = {
+            "Detected": f"{host}:{port}"
+        }
+        data2.append(data1)
         cgi_index = 0
         for cgi in cgi_list:
             cgi_index += 1
@@ -474,6 +483,10 @@ def main():
         default=False,
         help="Output debugging information during execution"
     )
+    parser.add_argument(
+        '--output',
+        help='Save to json output'
+    )
     args = parser.parse_args()
     portsobject = {
         21: 'FTP',
@@ -500,6 +513,8 @@ def main():
         5800: 'VNC',
         8080: 'HTTP',
     }
+
+    output: str = args.output
 
     # Assign options to variables
     debug = args.debug
@@ -550,6 +565,18 @@ def main():
                 print("[-] All exploit attempts failed")
         else:
             print("[+] No targets found to exploit\n")
+
+    MAIN_DIR: Final[pathlib.Path] = pathlib.Path(__file__).parent
+    output_json: str = MAIN_DIR / output
+    all_data = {
+        "Targets_found": data2,
+    }
+    if all_data == {}:
+        all_data = {
+            "Safety": "Nothing found in Shocker"
+        }
+    with open(output_json, "w") as jf:
+        json.dump(all_data, jf, indent=2)
 
 
 __version__ = '1.1'
