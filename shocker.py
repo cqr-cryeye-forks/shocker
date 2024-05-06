@@ -522,7 +522,7 @@ def main():
 
     file_name = "shocker-cgi_list"
     FILE_READ = f"{MAIN_DIR}/{file_name}"
-    print(FILE_READ)
+
     # Assign options to variables
     debug = args.debug
     if args.Host:
