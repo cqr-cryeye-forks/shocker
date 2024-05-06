@@ -526,32 +526,43 @@ def main():
         print("[-] No valid targets provided, exiting...")
         exit(0)
     # port = str(args.port)
+    if args.proxy is not None:
+        proxy = args.proxy
+    else:
+        proxy = ""
+    verbose = args.verbose
+    command = args.command
+    global thread_pool
+    if args.threads > 100:
+        print("Maximum number of threads is 100")
+        exit(0)
+    else:
+        thread_pool = threading.BoundedSemaphore(args.threads)
+    if args.cgi is not None:
+        cgi_list = [args.cgi]
+        print("[+] Single target '%s' being used" % cgi_list[0])
+    else:
+        cgi_list = import_cgi_list_from_file(args.cgilist)
+
+    NEW_host_target_list = []
+    http = "http://"
+    https = "https://"
+    for target in host_target_list:
+        if target.startswith(http):
+            target = target[len(http):]
+        elif target.startswith(https):
+            target = target[len(https):]
+        NEW_host_target_list.append(target)
+
     for key, value in portsobject.items():
         port = key
-        if args.proxy is not None:
-            proxy = args.proxy
-        else:
-            proxy = ""
-        verbose = args.verbose
-        command = args.command
         if args.ssl == True or port == "443":
             protocol = "https"
         else:
             protocol = "http"
-        global thread_pool
-        if args.threads > 100:
-            print("Maximum number of threads is 100")
-            exit(0)
-        else:
-            thread_pool = threading.BoundedSemaphore(args.threads)
-        if args.cgi is not None:
-            cgi_list = [args.cgi]
-            print("[+] Single target '%s' being used" % cgi_list[0])
-        else:
-            cgi_list = import_cgi_list_from_file(args.cgilist)
 
         # Check hosts resolve and are reachable on the chosen port
-        confirmed_hosts = check_hosts(host_target_list, port, verbose)
+        confirmed_hosts = check_hosts(NEW_host_target_list, port, verbose)
 
         # Go through the cgi_list looking for any present on the target host
         target_list = scan_hosts(protocol, confirmed_hosts, port, cgi_list, proxy, verbose)
@@ -571,7 +582,7 @@ def main():
     all_data = {
         "Targets_found": data2,
     }
-    if all_data == {}:
+    if data2 == []:
         all_data = {
             "Safety": "Nothing found in Shocker"
         }
