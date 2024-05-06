@@ -41,6 +41,7 @@ import socket
 import string
 import sys
 import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -514,14 +515,20 @@ def main():
         8080: 'HTTP',
     }
 
+    MAIN_DIR: Final[pathlib.Path] = pathlib.Path(__file__).parent
+
     output: str = args.output
+    output_json: str = MAIN_DIR / output
+
+    file_name = "shocker-cgi_list"
+    FILE_READ = f"/wp/{file_name}"
 
     # Assign options to variables
     debug = args.debug
     if args.Host:
         host_target_list = [args.Host]
     else:
-        host_target_list = get_targets_from_file(args.file, debug)
+        host_target_list = get_targets_from_file(FILE_READ, debug)
     if not len(host_target_list) > 0:
         print("[-] No valid targets provided, exiting...")
         exit(0)
@@ -542,7 +549,7 @@ def main():
         cgi_list = [args.cgi]
         print("[+] Single target '%s' being used" % cgi_list[0])
     else:
-        cgi_list = import_cgi_list_from_file(args.cgilist)
+        cgi_list = import_cgi_list_from_file(FILE_READ)
 
     NEW_host_target_list = []
     http = "http://"
@@ -577,8 +584,6 @@ def main():
         else:
             print("[+] No targets found to exploit\n")
 
-    MAIN_DIR: Final[pathlib.Path] = pathlib.Path(__file__).parent
-    output_json: str = MAIN_DIR / output
     all_data = {
         "Targets_found": data2,
     }
