@@ -584,10 +584,8 @@ def main():
         else:
             print("[+] No targets found to exploit\n")
 
-    all_data = {
-        "Targets_found": data2,
-    }
-    if data2 == []:
+    all_data = data2
+    if all_data == []:
         all_data = {
             "Safety": "Nothing found in Shocker"
         }
