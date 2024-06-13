@@ -517,8 +517,7 @@ def main():
 
     MAIN_DIR: Final[pathlib.Path] = pathlib.Path(__file__).parent
 
-    output: str = args.output
-    output_json: str = MAIN_DIR / output
+    output_json: Final[pathlib.Path] = MAIN_DIR / args.output
 
     file_name = "shocker-cgi_list"
     FILE_READ = f"{MAIN_DIR}/{file_name}"
